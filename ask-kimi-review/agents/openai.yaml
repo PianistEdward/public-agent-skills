@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ask Kimi Review"
+  short_description: "Run read-only Kimi code and visual reviews"
+  default_prompt: "Use $ask-kimi-review to get a read-only Kimi review of the current diff and supplied screenshots."
