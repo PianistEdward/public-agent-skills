@@ -4,6 +4,18 @@ All notable changes to this skill are documented here. Skill version lives in
 the SKILL.md frontmatter (`version:`); the bundled runner carries its own
 `runner_version` for runtime diagnostics.
 
+## 1.7.3 — 2026-09-24
+
+### Changed
+
+- SKILL: gate-evidence follow-ups made explicit — commit the artifact
+  (`git add` + commit) promptly once a gate passes (an untracked evidence
+  file is a missing evidence file at commit time; the runner-owned
+  `<artifact>.d/` sidecar is runtime-only — remove or exclude it before
+  the evidence commit rather than `git add -A`-ing raw reviewer output),
+  and periodically prune the accumulating `.omx/artifacts/` runtime
+  diagnostics. Documentation only; no runner behavior change.
+
 ## 1.7.2 — 2026-09-24
 
 ### Changed

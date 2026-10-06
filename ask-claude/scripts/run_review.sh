@@ -5,7 +5,7 @@ set -u
 # does the same)
 umask 077
 
-runner_version="1.7.2"
+runner_version="1.7.3"
 default_timeout="30m"
 repo_process_filters_detected=false
 repo_process_filters_origin=""

@@ -1,6 +1,6 @@
 ---
 name: ask-claude
-version: 1.7.2
+version: 1.7.3
 description: Use when requesting a focused consultation, code review, commit review, or external second opinion through the local Claude Code CLI
 ---
 
@@ -76,7 +76,7 @@ Use an explicit repository evidence path when the review is a durable stage gate
 
 An explicit artifact path must be a new `.md` file inside the reviewed repository worktree. Git metadata, skill/Codex/Claude configuration directories, repository-external paths, `..` traversal, and symlink escapes (including a pre-existing symlink, dangling or not, at the artifact or sidecar path) are rejected before any file is created. Its sibling sidecar directory must also be absent. Before partial, final, or failure publication, the runner rechecks that the artifact is a regular non-symlink file and that its canonical parent remains the reserved repository directory. Before wrapper-owned sidecar writes or cleanup, it also rechecks the canonical sidecar directory, direct-child filename, and that a target is absent or a regular non-symlink file. An unsafe artifact or sidecar path fails the run instead of publishing to or cleaning a replacement path. These pathname checks reduce accidental and tested symlink swaps; they are not an FD-based `openat`/`O_NOFOLLOW` guarantee against every local TOCTOU race. `--slug` accepts 1-80 characters that must start with a letter or digit, followed by letters, digits, dots, underscores, or hyphens.
 
-Without `--artifact`, the runner writes `.omx/artifacts/claude-<slug>-<timestamp>-<pid>.md`. That is a runtime diagnostic artifact and does not automatically satisfy a repository rule requiring committed or non-`.omx` gate evidence.
+Without `--artifact`, the runner writes `.omx/artifacts/claude-<slug>-<timestamp>-<pid>.md`. That is a runtime diagnostic artifact and does not automatically satisfy a repository rule requiring committed or non-`.omx` gate evidence. Two follow-ups keep the evidence trail honest: (1) when a review is gate evidence, write it to the repository-governed path via `--artifact` and commit it (`git add` + commit) promptly once the gate passes — an untracked evidence file is a missing evidence file at commit time, and the runner-owned `<artifact>.d/` sidecar (prompt/stdout/execution record) is runtime-only: remove or exclude it before the evidence commit rather than `git add -A`-ing raw reviewer output; (2) `.omx/artifacts/` accumulates one runtime diagnostic per run — periodically delete reviewed diagnostics whose evidence role has been superseded by a committed gate artifact.
 
 ### Stability Options
 
