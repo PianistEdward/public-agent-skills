@@ -1,0 +1,5 @@
+# omp review artifacts (result/state/prompt run dirs)
+.omx/
+
+# macOS junk
+.DS_Store
