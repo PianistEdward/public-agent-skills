@@ -4,6 +4,48 @@ All notable changes to this skill are documented here. Skill version lives in
 the SKILL.md frontmatter (`version:`); the bundled runner carries its own
 `RUNNER_VERSION` for runtime diagnostics.
 
+## 1.6.10 — 2026-09-24
+
+### Added
+
+- SKILL: the default `.omx/artifacts/` directory accumulates one runtime
+  diagnostic per run — periodic cleanup guidance added (delete reviewed
+  diagnostics whose durable copy is committed; the durable copy under
+  `--durable-dir` is the evidence of record).
+
+### Fixed (external omp review of this fix set)
+
+- Symlinked `--artifact-dir` (including the repo-shipped `.omx/artifacts`
+  default) is refused before `mkdir` follows it — the previous containment
+  check compared a path to its own parent and could never fire, so a
+  repo-shipped symlink redirected every evidence write (artifact, prompt,
+  command record, execution record, sandbox profile) to a directory the
+  repo author controls.
+- Sidecar directory pre-existence (`-L` **or** `-e`) now fails the run
+  (absence precondition, mirroring the ask-claude sidecar contract): a
+  pre-existing directory used to be adopted and written through with no
+  per-file revalidation, so symlinked children inside it were followed.
+- Symlinked `--durable-dir` is refused (gate marked ineligible,
+  `durable-dir-symlink`) instead of copying gate evidence through the
+  symlink.
+
+## 1.6.9 — 2026-09-22
+
+### Added (backfilled: shipped without a changelog entry)
+
+- `--skills-dir`: the runner points Kimi at an empty runner-owned
+  directory, replacing Kimi's user- and project-skills auto-discovery —
+  a reviewed repository can ship project skills whose instructions steer
+  the reviewer, and Kimi write tools still execute in `-p` mode, so
+  repository-shipped skills must not load into the review session.
+- Artifact leaf pre-existence refusal: a pre-existing symlink or any
+  existing file at the artifact path (guessed-name pre-planting by a
+  hostile local actor with artifact-directory write access) fails the
+  run instead of being overwritten. As shipped in 1.6.9 this covered the
+  artifact leaf only — the sidecar leaf was refused for symlinks only,
+  and symlinked artifact/durable directories were still followed;
+  closed in 1.6.10.
+
 ## 1.6.8 — 2026-09-22
 
 ### Fixed (cross-skill parity audit, round 10 — omp review r29)

@@ -1,6 +1,6 @@
 ---
 name: ask-kimi-review
-version: 1.6.9
+version: 1.6.10
 description: Use when a read-only local Kimi Code CLI second-opinion code or visual review is needed, including diffs, staged changes, commit ranges, screenshots, UI assets, architecture diagrams, security-sensitive changes, and cross-module regressions.
 ---
 
@@ -183,7 +183,7 @@ Artifact and sidecar writes are plain pathname operations, not directory-FD plus
 
 ### Evidence Class
 
-The default artifact directory `.omx/artifacts/` is a runtime diagnostic location and the artifact is marked `NOT stage-gate evidence`. When the repository requires review gate evidence (check its AGENTS.md for the governed path, for example `openspec/changes/.../reviews/` or `docs/review/`), pass that path via `--durable-dir`; the runner marks the artifact as durable gate evidence and copies it there. If the output contains credentials or other sensitive values beyond the quarantine patterns, redact the artifact and report that redaction; never paste secrets into the prompt or artifact.
+The default artifact directory `.omx/artifacts/` is a runtime diagnostic location and the artifact is marked `NOT stage-gate evidence`. When the repository requires review gate evidence (check its AGENTS.md for the governed path, for example `openspec/changes/.../reviews/` or `docs/review/`), pass that path via `--durable-dir`; the runner marks the artifact as durable gate evidence and copies it there. The default directory accumulates one artifact per run: periodically delete reviewed diagnostics whose durable copy (if any) is committed — the durable copy is the evidence of record, the `.omx` copy is not. If the output contains credentials or other sensitive values beyond the quarantine patterns, redact the artifact and report that redaction; never paste secrets into the prompt or artifact.
 
 
 ## Interpret Results

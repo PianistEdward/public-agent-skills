@@ -33,7 +33,7 @@
 # artifact before the runner exits 128+signal.
 
 set -u
-RUNNER_VERSION="1.6.9"
+RUNNER_VERSION="1.6.10"
 
 # ---------- argument parsing ----------
 
@@ -679,6 +679,14 @@ fi
 if [[ -z "$artifact_dir" ]]; then
   artifact_dir="$repo_root/.omx/artifacts"
 fi
+# refuse a symlinked artifact directory BEFORE mkdir follows it: the default
+# lives inside the reviewed repo ($repo_root/.omx/artifacts), so a repo-shipped
+# symlink could redirect every evidence write (artifact, prompt, command
+# record, execution record, sandbox profile) to a directory the repo author
+# controls and replace the evidence after finalization
+if [[ -L "$artifact_dir" ]]; then
+  die "Refusing to follow a pre-existing symlinked artifact directory: $artifact_dir" 3
+fi
 if ! mkdir -p "$artifact_dir"; then
   die "Unable to create the review artifact directory: $artifact_dir" 3
 fi
@@ -687,20 +695,18 @@ fi
 artifact_dir="$(canonical_dir "$artifact_dir")"
 artifact_timestamp="$(date -u +%Y%m%d-%H%M%S)"
 artifact="$artifact_dir/kimi-${slug}-${artifact_timestamp}-$$.md"
-# defense in depth on top of the slug allowlist: the resolved artifact parent
-# must stay inside the configured artifact directory
-case "$(canonical_dir "$(dirname "$artifact")")" in
-  "$artifact_dir"|"$artifact_dir"/*) : ;;
-  *) die "Resolved artifact path escapes --artifact-dir: $artifact" 2 ;;
-esac
 # the artifact name embeds pid + second-granularity timestamp, so a hostile
-# artifact directory can pre-plant a symlink at a guessed name; refuse to
-# follow one, and let the sidecar mkdir fail on a symlinked leaf too
+# artifact directory can pre-plant a symlink or file at a guessed name;
+# refuse to follow either
 if [[ -L "$artifact" || -e "$artifact" ]]; then
   die "Refusing to follow a pre-existing artifact path: $artifact" 3
 fi
 sidecar_dir="${artifact%.md}.d"
-if [[ -L "$sidecar_dir" ]]; then
+# absence precondition (mirrors the ask-claude sidecar contract): a
+# pre-existing sidecar directory would be adopted and then written through
+# with no per-file revalidation, so symlinked children inside it would be
+# followed — refuse any pre-existence instead
+if [[ -L "$sidecar_dir" || -e "$sidecar_dir" ]]; then
   die "Refusing to follow a pre-existing sidecar path: $sidecar_dir" 3
 fi
 if ! mkdir -p "$sidecar_dir"; then
@@ -1431,8 +1437,16 @@ append_evidence_and_cleanup() {
 
   durable_copy_result=""
   if [[ -n "$durable_dir" ]]; then
+    # same repo-shipped-symlink class as the artifact directory: a governed
+    # durable path that is itself a symlink would redirect the gate evidence
+    if [[ -L "$durable_dir" ]]; then
+      durable_copy_result="failed"
+      gate_reasons+=("durable-dir-symlink")
+      gate_eligible=false
+      printf 'Refusing to follow a pre-existing symlinked durable directory: %s\n' "$durable_dir" >&2
+    fi
     durable_sidecar="$durable_dir/$(basename "$sidecar_dir")"
-    if mkdir -p "$durable_dir" && cp "$artifact" "$durable_dir/" && mkdir -p "$durable_sidecar"; then
+    if [[ "$durable_copy_result" != "failed" ]] && mkdir -p "$durable_dir" && cp "$artifact" "$durable_dir/" && mkdir -p "$durable_sidecar"; then
       durable_copy_result="ok"
       # copy the sidecar entry by entry: quarantined raw streams must never
       # reach a repo-governed (committable/pushable) directory; they are
